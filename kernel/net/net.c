@@ -48,20 +48,14 @@ status net_card_validate(const net_card*card)
 		return(ERR_INVAL);
 	if(!card->present)
 		return(ERR_STATE);
-	status ret;
-	if((ret=net_text_valid(card->name,sizeof(card->name),1U))||
-		(ret=net_text_valid(card->driver,sizeof(card->driver),0U))||
-		(ret=net_text_valid(card->bus,sizeof(card->bus),0U)))
-		return(ret);
-	if((card->gw4&&!card->has4)||(card->gw6&&!card->has6))
-		return(ERR_INVAL);
-	if((card->gw4&&!net_bytes_any(card->gateway4.bytes,sizeof(card->gateway4.bytes)))||
-		(card->gw6&&!net_bytes_any(card->gateway6.bytes,sizeof(card->gateway6.bytes))))
-		return(ERR_INVAL);
-	if((card->has4&&net_addr4_valid(&card->addr4))||
-		(card->has6&&net_addr6_valid(&card->addr6)))
-		return(ERR_INVAL);
-	return(STATUS_OK);
+	return(net_text_valid(card->name,sizeof(card->name),1U)||
+		net_text_valid(card->driver,sizeof(card->driver),0U)||
+		net_text_valid(card->bus,sizeof(card->bus),0U)||
+		(card->gw4&&!card->has4)||(card->gw6&&!card->has6)||
+		(card->gw4&&!net_bytes_any(card->gateway4.bytes,sizeof(card->gateway4.bytes)))||
+		(card->gw6&&!net_bytes_any(card->gateway6.bytes,sizeof(card->gateway6.bytes)))||
+		(card->has4&&net_addr4_valid(&card->addr4))||
+		(card->has6&&net_addr6_valid(&card->addr6))?ERR_INVAL:STATUS_OK);
 }
 status net_plan_from_card(net_plan*plan,const net_card*card)
 {
@@ -85,19 +79,13 @@ status net_plan_from_card(net_plan*plan,const net_card*card)
 }
 status net_plan_validate(const net_plan*plan)
 {
-	if(!plan->card_id)
-		return(ERR_INVAL);
-	if(net_text_valid(plan->name,sizeof(plan->name),1U))
-		return(ERR_INVAL);
-	if((plan->gw4&&!plan->has4)||(plan->gw6&&!plan->has6))
-		return(ERR_INVAL);
-	if((plan->gw4&&!net_bytes_any(plan->gateway4.bytes,sizeof(plan->gateway4.bytes)))||
-		(plan->gw6&&!net_bytes_any(plan->gateway6.bytes,sizeof(plan->gateway6.bytes))))
-		return(ERR_INVAL);
-	if((plan->has4&&net_addr4_valid(&plan->addr4))||
-		(plan->has6&&net_addr6_valid(&plan->addr6)))
-		return(ERR_INVAL);
-	return(plan->has4||plan->has6?STATUS_OK:ERR_STATE);
+	return(!plan->card_id||net_text_valid(plan->name,sizeof(plan->name),1U)||
+		(plan->gw4&&!plan->has4)||(plan->gw6&&!plan->has6)||
+		(plan->gw4&&!net_bytes_any(plan->gateway4.bytes,sizeof(plan->gateway4.bytes)))||
+		(plan->gw6&&!net_bytes_any(plan->gateway6.bytes,sizeof(plan->gateway6.bytes)))||
+		(plan->has4&&net_addr4_valid(&plan->addr4))||
+		(plan->has6&&net_addr6_valid(&plan->addr6))?ERR_INVAL:
+		(plan->has4||plan->has6?STATUS_OK:ERR_STATE));
 }
 void net_discovery_begin(net_discovery*scan)
 {
