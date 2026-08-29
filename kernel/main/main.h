@@ -35,3 +35,5 @@ status core_init(core_ctx*,const core_config*);
 status core_unit_add(core_ctx*,core_unit*);
 status core_start(core_ctx*);
 status core_stop(core_ctx*);
+status core_shutdown(core_ctx*);
+status core_check(void);
