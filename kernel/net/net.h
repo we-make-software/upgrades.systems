@@ -21,14 +21,27 @@
 #define NET_PLAN_CARD_ID 16U
 #define NET_PLAN_ADMIN_UP 32U
 #define NET_PLAN_LINK_UP 64U
-typedef struct{u8 bytes[NET_ADDR4_BYTES];}net_ip4;
-typedef struct{u8 bytes[NET_ADDR6_BYTES];}net_ip6;
-typedef struct{net_ip4 ip;u8 prefix;}net_addr4;
-typedef struct{net_ip6 ip;u8 prefix;}net_addr6;
+typedef struct{
+	u8 bytes[NET_ADDR4_BYTES];
+}net_ip4;
+typedef struct{
+	u8 bytes[NET_ADDR6_BYTES];
+}net_ip6;
+typedef struct{
+	net_ip4 ip;
+	u8 prefix;
+}net_addr4;
+typedef struct{
+	net_ip6 ip;
+	u8 prefix;
+}net_addr6;
 typedef struct{
 	u32 id;
-	char name[NET_NAME_BYTES],driver[NET_DRIVER_BYTES],bus[NET_BUS_BYTES];
-	u8 flags,mac[NET_MAC_BYTES];
+	char name[NET_NAME_BYTES];
+	char driver[NET_DRIVER_BYTES];
+	char bus[NET_BUS_BYTES];
+	u8 flags;
+	u8 mac[NET_MAC_BYTES];
 	net_addr4 addr4;
 	net_addr6 addr6;
 	net_ip4 gateway4;
@@ -44,7 +57,16 @@ typedef struct{
 	u8 flags;
 }net_plan;
 typedef struct{
-	u16 cards,invalid,admin_up,link_up,addr4,addr6,gateway4,gateway6,ready4,ready6;
+	u16 cards;
+	u16 invalid;
+	u16 admin_up;
+	u16 link_up;
+	u16 addr4;
+	u16 addr6;
+	u16 gateway4;
+	u16 gateway6;
+	u16 ready4;
+	u16 ready6;
 	u8 primary_score;
 	net_card primary;
 }net_discovery;
