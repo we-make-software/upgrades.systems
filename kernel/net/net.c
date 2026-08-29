@@ -44,18 +44,15 @@ void net_card_clear(net_card*card)
 }
 status net_card_validate(const net_card*card)
 {
-	if(!card||!card->id)
-		return(ERR_INVAL);
-	if(!card->present)
-		return(ERR_STATE);
-	return(net_text_valid(card->name,sizeof(card->name),1U)||
+	return(!card||!card->id?ERR_INVAL:(!card->present?ERR_STATE:
+		(net_text_valid(card->name,sizeof(card->name),1U)||
 		net_text_valid(card->driver,sizeof(card->driver),0U)||
 		net_text_valid(card->bus,sizeof(card->bus),0U)||
 		(card->gw4&&!card->has4)||(card->gw6&&!card->has6)||
 		(card->gw4&&!net_bytes_any(card->gateway4.bytes,sizeof(card->gateway4.bytes)))||
 		(card->gw6&&!net_bytes_any(card->gateway6.bytes,sizeof(card->gateway6.bytes)))||
 		(card->has4&&net_addr4_valid(&card->addr4))||
-		(card->has6&&net_addr6_valid(&card->addr6))?ERR_INVAL:STATUS_OK);
+		(card->has6&&net_addr6_valid(&card->addr6))?ERR_INVAL:STATUS_OK)));
 }
 status net_plan_from_card(net_plan*plan,const net_card*card)
 {
@@ -99,14 +96,14 @@ status net_discovery_card(net_discovery*scan,const net_card*card)
 		return(ret);
 	}
 	scan->cards++;
-	scan->admin_up=(u16)(scan->admin_up+card->admin);
-	scan->link_up=(u16)(scan->link_up+card->link);
-	scan->addr4=(u16)(scan->addr4+card->has4);
-	scan->addr6=(u16)(scan->addr6+card->has6);
-	scan->gateway4=(u16)(scan->gateway4+card->gw4);
-	scan->gateway6=(u16)(scan->gateway6+card->gw6);
-	scan->ready4=(u16)(scan->ready4+(card->admin&&card->link&&card->has4&&card->gw4));
-	scan->ready6=(u16)(scan->ready6+(card->admin&&card->link&&card->has6&&card->gw6));
+	scan->admin_up=(u8)(scan->admin_up+card->admin);
+	scan->link_up=(u8)(scan->link_up+card->link);
+	scan->addr4=(u8)(scan->addr4+card->has4);
+	scan->addr6=(u8)(scan->addr6+card->has6);
+	scan->gateway4=(u8)(scan->gateway4+card->gw4);
+	scan->gateway6=(u8)(scan->gateway6+card->gw6);
+	scan->ready4=(u8)(scan->ready4+(card->admin&&card->link&&card->has4&&card->gw4));
+	scan->ready6=(u8)(scan->ready6+(card->admin&&card->link&&card->has6&&card->gw6));
 	u8 score=(u8)(card->admin+card->link+card->has4+card->has6+card->gw4+card->gw6);
 	if(score>scan->primary_score||!scan->primary.id){
 		scan->primary=*card;
@@ -129,8 +126,10 @@ static void fill_addr4(net_card*card,const struct net_device*dev)
 	if(!ifa)
 		return;
 	bytes=(const u8*)&ifa->ifa_local;
-	for(u8 i=0U;i<sizeof(card->addr4.ip.bytes);i++)
-		card->addr4.ip.bytes[i]=bytes[i];
+	card->addr4.ip.bytes[0]=bytes[0];
+	card->addr4.ip.bytes[1]=bytes[1];
+	card->addr4.ip.bytes[2]=bytes[2];
+	card->addr4.ip.bytes[3]=bytes[3];
 	card->addr4.prefix=ifa->ifa_prefixlen;
 	card->has4=1;
 }
@@ -148,8 +147,22 @@ static void fill_addr6(net_card*card,const struct net_device*dev)
 		if(ipv6_addr_type(&ifa->addr)!=IPV6_ADDR_UNICAST||
 			ipv6_addr_src_scope(&ifa->addr)!=IPV6_ADDR_SCOPE_GLOBAL)
 			continue;
-		for(u8 i=0U;i<sizeof(card->addr6.ip.bytes);i++)
-			card->addr6.ip.bytes[i]=a[i];
+		card->addr6.ip.bytes[0]=a[0];
+		card->addr6.ip.bytes[1]=a[1];
+		card->addr6.ip.bytes[2]=a[2];
+		card->addr6.ip.bytes[3]=a[3];
+		card->addr6.ip.bytes[4]=a[4];
+		card->addr6.ip.bytes[5]=a[5];
+		card->addr6.ip.bytes[6]=a[6];
+		card->addr6.ip.bytes[7]=a[7];
+		card->addr6.ip.bytes[8]=a[8];
+		card->addr6.ip.bytes[9]=a[9];
+		card->addr6.ip.bytes[10]=a[10];
+		card->addr6.ip.bytes[11]=a[11];
+		card->addr6.ip.bytes[12]=a[12];
+		card->addr6.ip.bytes[13]=a[13];
+		card->addr6.ip.bytes[14]=a[14];
+		card->addr6.ip.bytes[15]=a[15];
 		card->addr6.prefix=(u8)ifa->prefix_len;
 		card->has6=1;
 		break;
@@ -167,8 +180,12 @@ static void fill_card(net_card*card,const struct net_device*dev)
 	card->admin=!!(dev->flags&IFF_UP);
 	card->link=netif_carrier_ok(dev)?1:0;
 	if(dev->addr_len==sizeof(card->mac)){
-		for(u8 i=0U;i<sizeof(card->mac);i++)
-			card->mac[i]=dev->dev_addr[i];
+		card->mac[0]=dev->dev_addr[0];
+		card->mac[1]=dev->dev_addr[1];
+		card->mac[2]=dev->dev_addr[2];
+		card->mac[3]=dev->dev_addr[3];
+		card->mac[4]=dev->dev_addr[4];
+		card->mac[5]=dev->dev_addr[5];
 		card->has_mac=1;
 	}
 	parent=dev->dev.parent;

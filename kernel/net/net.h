@@ -16,17 +16,8 @@ typedef struct{
 }net_addr6;
 typedef struct{
 	u32 id;
-	char name[16];
-	char driver[32];
-	char bus[32];
-	u8 present:1;
-	u8 admin:1;
-	u8 link:1;
-	u8 has_mac:1;
-	u8 has4:1;
-	u8 has6:1;
-	u8 gw4:1;
-	u8 gw6:1;
+	char name[16],driver[32],bus[32];
+	u8 present:1,admin:1,link:1,has_mac:1,has4:1,has6:1,gw4:1,gw6:1;
 	u8 mac[6];
 	net_addr4 addr4;
 	net_addr6 addr6;
@@ -36,29 +27,14 @@ typedef struct{
 typedef struct{
 	u32 card_id;
 	char name[16];
-	u8 has4:1;
-	u8 has6:1;
-	u8 gw4:1;
-	u8 gw6:1;
-	u8 admin:1;
-	u8 link:1;
+	u8 has4:1,has6:1,gw4:1,gw6:1,admin:1,link:1;
 	net_addr4 addr4;
 	net_ip4 gateway4;
 	net_addr6 addr6;
 	net_ip6 gateway6;
 }net_plan;
 typedef struct{
-	u16 cards;
-	u16 invalid;
-	u16 admin_up;
-	u16 link_up;
-	u16 addr4;
-	u16 addr6;
-	u16 gateway4;
-	u16 gateway6;
-	u16 ready4;
-	u16 ready6;
-	u8 primary_score;
+	u8 cards,invalid,admin_up,link_up,addr4,addr6,gateway4,gateway6,ready4,ready6,primary_score;
 	net_card primary;
 }net_discovery;
 void net_card_clear(net_card*);
