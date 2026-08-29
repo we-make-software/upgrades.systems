@@ -17,7 +17,7 @@ struct core_unit{
 	core_leave leave;
 	void*context;
 	status result;
-	u8 required,active;
+	u8 required:1,active:1;
 };
 typedef struct{
 	void(*log)(const char*);
