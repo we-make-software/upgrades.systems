@@ -1,0 +1,7 @@
+menu "upgrades.systems"
+config UPGRADES_ADAPTER
+	bool "upgrades.systems kernel adapter"
+	depends on BLOCK
+	help
+	  Built-in leftover and GitHub source path. Not a module.
+endmenu

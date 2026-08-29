@@ -1,0 +1,10 @@
+/server/
+**/.config
+*.o
+*.cmd
+*.ko
+*.mod
+*.mod.c
+*.a
+*.tar
+*.deb
