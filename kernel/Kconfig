@@ -1,0 +1,7 @@
+menu "upgrades.systems"
+config UPGRADES_ADAPTER
+	bool "upgrades.systems kernel adapter"
+	depends on NET && BLOCK
+	help
+	  Built-in main and net. Not a module.
+endmenu
