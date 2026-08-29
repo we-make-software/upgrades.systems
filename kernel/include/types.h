@@ -13,7 +13,9 @@ _Static_assert(sizeof(u16)==2,"u16");
 _Static_assert(sizeof(u32)==4,"u32");
 _Static_assert(sizeof(u64)==8,"u64");
 _Static_assert(sizeof(status)==4,"status");
-#define STATUS_OK ((status)0)
-#define ERR_INVAL ((status)-22)
-#define ERR_STATE ((status)-16)
-#define ERR_PLATFORM ((status)-95)
+enum{
+	STATUS_OK=0,
+	ERR_INVAL=-22,
+	ERR_STATE=-16,
+	ERR_PLATFORM=-95
+};

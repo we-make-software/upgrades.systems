@@ -1,8 +1,13 @@
+#include<linux/err.h>
 #include<linux/inetdevice.h>
 #include<linux/netdevice.h>
+#include<linux/rcupdate.h>
 #include<linux/rtnetlink.h>
 #include<net/addrconf.h>
+#include<net/ip6_fib.h>
+#include<net/ip6_route.h>
 #include<net/ipv6.h>
+#include<net/route.h>
 #include"net.h"
 static status net_text_valid(const char*text,u32 size,u32 required)
 {
@@ -170,6 +175,98 @@ static void fill_addr6(net_card*card,const struct net_device*dev)
 	read_unlock_bh(&idev->lock);
 	in6_dev_put(idev);
 }
+static __be32 ipv4(u8 a,u8 b,u8 c,u8 d)
+{
+	return(htonl(((u32)a<<24)|((u32)b<<16)|((u32)c<<8)|d));
+}
+static void fill_route4(net_card*card,const struct net_device*dev)
+{
+	if(!card->has4)
+		return;
+	struct flowi4 fl4={
+		.flowi4_oif=dev->ifindex,
+		.flowi4_scope=RT_SCOPE_UNIVERSE,
+		.daddr=ipv4(1U,1U,1U,1U),
+		.saddr=ipv4(card->addr4.ip.bytes[0],card->addr4.ip.bytes[1],card->addr4.ip.bytes[2],card->addr4.ip.bytes[3])
+	};
+	struct rtable*rt=ip_route_output_flow(dev_net(dev),&fl4,0);
+	if(IS_ERR(rt))
+		return;
+	if(rt->rt_uses_gateway&&rt->rt_gw_family==AF_INET){
+		const u8*bytes=(const u8*)&rt->rt_gw4;
+		card->gateway4.bytes[0]=bytes[0];
+		card->gateway4.bytes[1]=bytes[1];
+		card->gateway4.bytes[2]=bytes[2];
+		card->gateway4.bytes[3]=bytes[3];
+		card->gw4=1;
+	}
+	ip_rt_put(rt);
+}
+static void fill_route6(net_card*card,const struct net_device*dev)
+{
+	if(!card->has6)
+		return;
+	struct in6_addr probe;
+	probe.s6_addr[0]=38U;
+	probe.s6_addr[1]=6U;
+	probe.s6_addr[2]=71U;
+	probe.s6_addr[3]=0U;
+	probe.s6_addr[4]=71U;
+	probe.s6_addr[5]=0U;
+	probe.s6_addr[6]=0U;
+	probe.s6_addr[7]=0U;
+	probe.s6_addr[8]=0U;
+	probe.s6_addr[9]=0U;
+	probe.s6_addr[10]=0U;
+	probe.s6_addr[11]=0U;
+	probe.s6_addr[12]=0U;
+	probe.s6_addr[13]=0U;
+	probe.s6_addr[14]=17U;
+	probe.s6_addr[15]=17U;
+	struct flowi6 fl6={.flowi6_oif=dev->ifindex,.daddr=probe};
+	fl6.saddr.s6_addr[0]=card->addr6.ip.bytes[0];
+	fl6.saddr.s6_addr[1]=card->addr6.ip.bytes[1];
+	fl6.saddr.s6_addr[2]=card->addr6.ip.bytes[2];
+	fl6.saddr.s6_addr[3]=card->addr6.ip.bytes[3];
+	fl6.saddr.s6_addr[4]=card->addr6.ip.bytes[4];
+	fl6.saddr.s6_addr[5]=card->addr6.ip.bytes[5];
+	fl6.saddr.s6_addr[6]=card->addr6.ip.bytes[6];
+	fl6.saddr.s6_addr[7]=card->addr6.ip.bytes[7];
+	fl6.saddr.s6_addr[8]=card->addr6.ip.bytes[8];
+	fl6.saddr.s6_addr[9]=card->addr6.ip.bytes[9];
+	fl6.saddr.s6_addr[10]=card->addr6.ip.bytes[10];
+	fl6.saddr.s6_addr[11]=card->addr6.ip.bytes[11];
+	fl6.saddr.s6_addr[12]=card->addr6.ip.bytes[12];
+	fl6.saddr.s6_addr[13]=card->addr6.ip.bytes[13];
+	fl6.saddr.s6_addr[14]=card->addr6.ip.bytes[14];
+	fl6.saddr.s6_addr[15]=card->addr6.ip.bytes[15];
+	struct fib6_result res={0};
+	rcu_read_lock();
+	if(fib6_lookup(dev_net(dev),dev->ifindex,&fl6,&res,RT6_LOOKUP_F_IFACE)){
+		rcu_read_unlock();
+		return;
+	}
+	if(res.nh&&res.nh->fib_nh_dev==dev&&res.nh->fib_nh_gw_family==AF_INET6){
+		card->gateway6.bytes[0]=res.nh->fib_nh_gw6.s6_addr[0];
+		card->gateway6.bytes[1]=res.nh->fib_nh_gw6.s6_addr[1];
+		card->gateway6.bytes[2]=res.nh->fib_nh_gw6.s6_addr[2];
+		card->gateway6.bytes[3]=res.nh->fib_nh_gw6.s6_addr[3];
+		card->gateway6.bytes[4]=res.nh->fib_nh_gw6.s6_addr[4];
+		card->gateway6.bytes[5]=res.nh->fib_nh_gw6.s6_addr[5];
+		card->gateway6.bytes[6]=res.nh->fib_nh_gw6.s6_addr[6];
+		card->gateway6.bytes[7]=res.nh->fib_nh_gw6.s6_addr[7];
+		card->gateway6.bytes[8]=res.nh->fib_nh_gw6.s6_addr[8];
+		card->gateway6.bytes[9]=res.nh->fib_nh_gw6.s6_addr[9];
+		card->gateway6.bytes[10]=res.nh->fib_nh_gw6.s6_addr[10];
+		card->gateway6.bytes[11]=res.nh->fib_nh_gw6.s6_addr[11];
+		card->gateway6.bytes[12]=res.nh->fib_nh_gw6.s6_addr[12];
+		card->gateway6.bytes[13]=res.nh->fib_nh_gw6.s6_addr[13];
+		card->gateway6.bytes[14]=res.nh->fib_nh_gw6.s6_addr[14];
+		card->gateway6.bytes[15]=res.nh->fib_nh_gw6.s6_addr[15];
+		card->gw6=1;
+	}
+	rcu_read_unlock();
+}
 static void fill_card(net_card*card,const struct net_device*dev)
 {
 	const struct device*parent;
@@ -195,6 +292,8 @@ static void fill_card(net_card*card,const struct net_device*dev)
 	}
 	fill_addr4(card,dev);
 	fill_addr6(card,dev);
+	fill_route4(card,dev);
+	fill_route6(card,dev);
 }
 status net_scan(net_discovery*out)
 {
